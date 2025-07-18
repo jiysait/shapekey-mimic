@@ -1,0 +1,18 @@
+# 사용자 등록
+devnote.txt
+
+# Python 바이트코드 파일
+__pycache__/
+*.py[cod]
+
+# 가상 환경 (venv)
+venv/
+.venv/
+
+# 운영체제별 임시 파일
+.DS_Store
+Thumbs.db
+
+# 에디터 설정 (선택적으로)
+.vscode/
+.idea/
