@@ -211,14 +211,18 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
             if tgt_keys is None:
                 continue
 
-            tgt_anim_data = tgt_keys.animation_data
-            if tgt_anim_data and tgt_anim_data.action:
-                tgt_action = tgt_anim_data.action
+            tgt_anim_data =  target.animation_data
+            tgt_sk_anim_data = tgt_keys.animation_data
+            if tgt_sk_anim_data and tgt_sk_anim_data.action:
+                tgt_action = tgt_sk_anim_data.action
             else:
-                tgt_action = bpy.data.actions.new(name=f"{target.name}Action")
+                if tgt_anim_data and tgt_anim_data.action:
+                    tgt_action = tgt_anim_data.action
+                else:
+                    tgt_action = bpy.data.actions.new(name=f"{target.name}Action")
 
-            if tgt_anim_data and tgt_anim_data.action_slot:
-                tgt_slot = tgt_anim_data.action_slot
+            if tgt_sk_anim_data and tgt_sk_anim_data.action_slot:
+                tgt_slot = tgt_sk_anim_data.action_slot
             else:
                 tgt_slot = tgt_action.slots.new("KEY", active_key_name)
 
