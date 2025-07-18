@@ -52,7 +52,9 @@ MIT License
 ---
 
 **Questions & Feedback**  
-Feel free to open an issue or
+Feel free to open an issue or pull request!
+
+# Korean Version
 
 **ShapeKey Mimic**는 Blender에서 활성 오브젝트의 쉐이프키(Shape Key)와 해당 키프레임을 다른 메쉬 오브젝트에 쉽게 복사할 수 있도록 도와주는 애드온입니다.
 
