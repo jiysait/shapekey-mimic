@@ -1,0 +1,18 @@
+schema_version = "1.0.0"
+
+id = "shapekey_mimic"
+name = "ShapeKey Mimic"
+tagline = "Mimic shape keys and their animations across multiple objects."
+version = "1.0.0"
+
+blender_version_min = "4.4"
+author = "Jongil Yoon"
+maintainer = "jiysait"
+description = "Mimic shape keys and their animations across multiple objects."
+category = "Animation"
+support = "COMMUNITY"
+type = "add-on"
+
+tags = ["Keyframe", "Animation", "ShapeKey", "ActionSlot", "ChannelBag"]
+license = ["MIT"]
+copyright = ["2025 Jongil Yoon"]
