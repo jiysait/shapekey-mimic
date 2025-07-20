@@ -221,18 +221,17 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
             self.report({'ERROR'}, "No channel bag found for source action.")
             return {'CANCELLED'}
 
+        # 개선: 정규식 대신 문자열 비교로 정확한 이름 매칭
+        expected_path = f'key_blocks["{active_key_name}"].value'
         src_fc = None
         for fcurve in src_cb.fcurves:
-            match = re.match(r'key_blocks\["(.+?)"\]\.value', fcurve.data_path)
-            if match:
-                key_name = match.group(1)
-                if key_name == active_key_name:
-                    src_fc = fcurve
-                    break
+            if fcurve.data_path == expected_path:
+                src_fc = fcurve
+                break
 
         if not src_fc:
             self.report({'ERROR'}, f"No keyframe found for shape key '{active_key_name}'.")
-            return {'CANCELLED'}    
+            return {'CANCELLED'}
 
         copied_count = 0
         skipped_count = 0
@@ -245,7 +244,7 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
             if tgt_keys is None:
                 continue
 
-            tgt_anim_data =  target.animation_data
+            tgt_anim_data = target.animation_data
             tgt_sk_anim_data = tgt_keys.animation_data
             if tgt_sk_anim_data and tgt_sk_anim_data.action:
                 tgt_action = tgt_sk_anim_data.action
