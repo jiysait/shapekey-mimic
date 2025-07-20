@@ -222,7 +222,10 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
         if not src_fc:
             self.report({'ERROR'}, f"No keyframe found for shape key '{active_key_name}'.")
             return {'CANCELLED'}    
-        
+
+        copied_count = 0
+        skipped_count = 0
+
         for target in targets:
             if target.type != 'MESH':
                 continue
@@ -257,20 +260,26 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
             index = src_fc.array_index
             tgt_fc = tgt_cb.fcurves.find(path, index=index)
             if overwrite:
+                if tgt_fc:
+                    tgt_cb.fcurves.remove(tgt_fc)
                 tgt_fc = tgt_cb.fcurves.new(path, index=index)
+                self._copy_keyframes_from_to(src_fc, tgt_fc)
+                copied_count += 1
             else:
                 if not tgt_fc:
                     tgt_fc = tgt_cb.fcurves.new(path, index=index)
+                    self._copy_keyframes_from_to(src_fc, tgt_fc)
+                    copied_count += 1
                 else:
                     self.report({'WARNING'}, f"Keyframe for '{active_key_name}' already exists in {target.name}. Skipped.")
+                    skipped_count += 1
                     continue
-
-            self._copy_keyframes_from_to(src_fc, tgt_fc)
 
             adt = tgt_keys.animation_data_create()
             adt.action = tgt_action
             adt.action_slot = tgt_slot
 
+        self.report({'INFO'}, f"Copied: {copied_count}, Skipped: {skipped_count}")
         return {'FINISHED'}
 
 
