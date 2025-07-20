@@ -9,10 +9,11 @@ class SHAPEKEYMIMIC_PT_ToolPanel(bpy.types.Panel):
     bl_label = "ShapeKey Mimic"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'Tool'
+    bl_category = 'ShapeKey Mimic'
 
     def draw(self, context):
         layout = self.layout
+        layout.label(text="Shape Key Mimic Tool", icon='SHAPEKEY_DATA')
         scene = context.scene
         obj = context.active_object
 
