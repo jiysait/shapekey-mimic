@@ -1,10 +1,17 @@
-import array
 import bpy
 import re
 from bpy_extras import anim_utils
 
 
+def get_targets(context):
+    """Return selected objects except the active object."""
+    selected = context.selected_objects
+    source = context.active_object
+    return [obj for obj in selected if obj != source]
+
+
 class SHAPEKEYMIMIC_PT_ToolPanel(bpy.types.Panel):
+    """UI Panel for ShapeKey Mimic"""
     bl_idname = "SHAPEKEYMIMIC_PT_tool_panel"
     bl_label = "ShapeKey Mimic"
     bl_space_type = 'VIEW_3D'
@@ -40,6 +47,7 @@ class SHAPEKEYMIMIC_PT_ToolPanel(bpy.types.Panel):
 
 
 class SHAPEKEYMIMIC_OT_SetActiveShapekey(bpy.types.Operator):
+    """Set the selected shape key as active"""
     bl_idname = "shapekeymimic.set_active_shapekey"
     bl_label = "Set Active Shape Key"
     bl_description = "Set the selected shape key as active"
@@ -55,6 +63,7 @@ class SHAPEKEYMIMIC_OT_SetActiveShapekey(bpy.types.Operator):
 
 
 class SHAPEKEYMIMIC_OT_CopyShapeKey(bpy.types.Operator):
+    """Copy the active shape key from the active object to selected target objects"""
     bl_idname = "shapekeymimic.copy_shapekey"
     bl_label = "Copy Shape Key"
     bl_description = "Copy the active shape key from the active object to selected target objects"
@@ -65,11 +74,10 @@ class SHAPEKEYMIMIC_OT_CopyShapeKey(bpy.types.Operator):
             self.report({'ERROR'}, "Switch to Object mode.")
             return {'CANCELLED'}
 
-        selected = context.selected_objects
+        targets = get_targets(context)
         source = context.active_object
-        targets = [obj for obj in selected if obj != source]
 
-        if len(selected) < 2:
+        if len(context.selected_objects) < 2:
             self.report({'ERROR'}, "Select source and target objects.")
             return {'CANCELLED'}
 
@@ -120,12 +128,15 @@ class SHAPEKEYMIMIC_OT_CopyShapeKey(bpy.types.Operator):
                         target_key = target.data.shape_keys.key_blocks[active_key_name]
                     else:
                         skipped_count += 1
-                        raise ValueError("Shape key exists. Skipped.")
+                        self.report({'WARNING'}, f"[{target.name}] Shape key exists. Skipped.")
+                        continue
                 else:
                     target_key = target.shape_key_add(name=active_key_name, from_mix=False)
 
                 if len(target_key.data) != len(source_coords):
-                    raise ValueError("Vertex count mismatch.")
+                    self.report({'WARNING'}, f"[{target.name}] Vertex count mismatch. Skipped.")
+                    skipped_count += 1
+                    continue
 
                 for i, v in enumerate(target_key.data):
                     v.co = source_coords[i]
@@ -135,6 +146,7 @@ class SHAPEKEYMIMIC_OT_CopyShapeKey(bpy.types.Operator):
 
             except Exception as e:
                 self.report({'WARNING'}, f"[{target.name}] {str(e)}")
+                skipped_count += 1
 
         active_key.value = active_key_value
 
@@ -143,6 +155,7 @@ class SHAPEKEYMIMIC_OT_CopyShapeKey(bpy.types.Operator):
 
 
 class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
+    """Copy shape key keyframes from active source object to selected target objects"""
     bl_idname = "shapekeymimic.copy_keyframe"
     bl_label = "Copy Shape Key Keyframe"
     bl_description = "Copy shape key keyframes from active source object to selected target objects"
@@ -161,11 +174,10 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
             self.report({'ERROR'}, "Switch to Object mode.")
             return {'CANCELLED'}
 
-        selected = context.selected_objects
+        targets = get_targets(context)
         source = context.active_object
-        targets = [obj for obj in selected if obj != source]
 
-        if len(selected) < 2:
+        if len(context.selected_objects) < 2:
             self.report({'ERROR'}, "Select source and target objects.")
             return {'CANCELLED'}
 
@@ -217,8 +229,6 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
                 if key_name == active_key_name:
                     src_fc = fcurve
                     break
-            else:
-                continue
 
         if not src_fc:
             self.report({'ERROR'}, f"No keyframe found for shape key '{active_key_name}'.")
