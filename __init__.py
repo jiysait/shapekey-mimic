@@ -244,6 +244,11 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
             if tgt_keys is None:
                 continue
 
+            if not active_key_name in target.data.shape_keys.key_blocks:
+                self.report({'WARNING'}, f"[{target.name}] Shape key '{active_key_name}' does not exist. Skipped.")
+                skipped_count += 1
+                continue
+                
             tgt_anim_data = target.animation_data
             tgt_sk_anim_data = tgt_keys.animation_data
             if tgt_sk_anim_data and tgt_sk_anim_data.action:
