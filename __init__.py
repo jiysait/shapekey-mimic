@@ -1,3 +1,4 @@
+import array
 import bpy
 import re
 from bpy_extras import anim_utils
@@ -188,14 +189,14 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
             self.report({'ERROR'}, "No actions found.")
             return {'CANCELLED'}
 
+        overwrite = context.scene.shapekeymimic_overwrite
+        active_key_name = active_key.name
+
         shape_keys = source.data.shape_keys
         anim_data = shape_keys.animation_data
         if not anim_data or not anim_data.action or not anim_data.action_slot:
             self.report({'ERROR'}, "No shape key animation data.")
             return {'CANCELLED'}
-
-        overwrite = context.scene.shapekeymimic_overwrite
-        active_key_name = active_key.name
 
         try:
             src_cb = anim_utils.action_get_channelbag_for_slot(anim_data.action, anim_data.action_slot)
@@ -203,6 +204,25 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
             self.report({'WARNING'}, f"Channel bag error: {str(e)}")
             return {'CANCELLED'}
 
+        if not src_cb:
+            self.report({'ERROR'}, "No channel bag found for source action.")
+            return {'CANCELLED'}
+
+        src_fc = None
+        for fcurve in src_cb.fcurves:
+            match = re.match(r'key_blocks\["(.+?)"\]\.value', fcurve.data_path)
+            if match:
+                key_name = match.group(1)
+                if key_name == active_key_name:
+                    src_fc = fcurve
+                    break
+            else:
+                continue
+
+        if not src_fc:
+            self.report({'ERROR'}, f"No keyframe found for shape key '{active_key_name}'.")
+            return {'CANCELLED'}    
+        
         for target in targets:
             if target.type != 'MESH':
                 continue
@@ -233,18 +253,19 @@ class SHAPEKEYMIMIC_OT_CopyKeyframe(bpy.types.Operator):
 
             tgt_cb = tgt_strip.channelbag(tgt_slot, ensure=True)
 
-            for fc in src_cb.fcurves:
-                pattern = rf'key_blocks\["{re.escape(active_key_name)}"\]\.value'
-                if not re.search(pattern, fc.data_path):
-                    continue
-
-                path = fc.data_path
-                index = fc.array_index
-                tgt_fc = tgt_cb.fcurves.find(path, index=index)
+            path = src_fc.data_path
+            index = src_fc.array_index
+            tgt_fc = tgt_cb.fcurves.find(path, index=index)
+            if overwrite:
+                tgt_fc = tgt_cb.fcurves.new(path, index=index)
+            else:
                 if not tgt_fc:
                     tgt_fc = tgt_cb.fcurves.new(path, index=index)
+                else:
+                    self.report({'WARNING'}, f"Keyframe for '{active_key_name}' already exists in {target.name}. Skipped.")
+                    continue
 
-                self._copy_keyframes_from_to(fc, tgt_fc)
+            self._copy_keyframes_from_to(src_fc, tgt_fc)
 
             adt = tgt_keys.animation_data_create()
             adt.action = tgt_action
